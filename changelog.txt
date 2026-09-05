@@ -18691,3 +18691,8 @@ no qc pass: integrated pvrp with labels
 no qc pass: qos ingress shaper action
 failed: qos ingress shaper action
 failed: integrated pvrp with labels
+---------------------------------- 2026-09-05 17:17:59 26.9.5
+no failed: integrated pvrp with labels
+no failed: qos ingress shaper action
+qc pass: qos ingress shaper action
+qc pass: integrated pvrp with labels
