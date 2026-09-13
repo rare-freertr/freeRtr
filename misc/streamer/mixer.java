@@ -137,10 +137,10 @@ public class mixer {
                     cur.volR = volume2range(cur.volR, +1);
                     break;
                 case ' ':
-                    System.out.println("\r\n\r\n\ro " + visDoer.rms(outLst));
+                    System.out.println("\r\n\r\n\ro " + visDoer.rms(outLst) + " pkt mis len ovr und");
                     for (i = 0; i < source.length; i++) {
                         cur = source[i];
-                        System.out.println("\r" + (i + 1) + cur.getRms() + " " + cur.pkt + " " + cur.err);
+                        System.out.println("\r" + (i + 1) + " " + cur.getRms() + " " + cur.pkt + " " + (source[0].pkt - cur.pkt) + " " + cur.len + " " + cur.ovr + " " + cur.und);
                     }
                     System.out.println("\r");
                     break;
@@ -196,7 +196,11 @@ class mixerOne {
 
     public int pkt;
 
-    public int err;
+    public int ovr;
+
+    public int und;
+
+    public int len;
 
     public long volL;
 
@@ -206,28 +210,12 @@ class mixerOne {
         src = s;
         cur = new byte[consts.payl];
         buf = new int[b][cur.length / consts.smpb];
-        posW = 0;
-        posR = 1;
         volL = vl;
         volR = vr;
     }
 
     public String getRms() {
         return visDoer.rms(buf[posR]);
-    }
-
-    public boolean readRound() throws Exception {
-        int o = src.readKind(cur);
-        if (o < 1) {
-            return true;
-        }
-        for (int i = o; i < cur.length; i++) {
-            cur[i] = 0;
-        }
-        src.coder.decode(buf[posW], cur, cur.length);
-        posW = (posW + 1) % buf.length;
-        pkt++;
-        return false;
     }
 
     public void readRounds() throws Exception {
@@ -239,15 +227,34 @@ class mixerOne {
             }
             don++;
         }
-        if (don < buf.length) {
-            return;
+        if (don >= buf.length) {
+            ovr++;
         }
-        err++;
+        if (don < 1) {
+            und++;
+        }
+    }
+
+    public boolean readRound() throws Exception {
+        int o = src.readKind(cur);
+        if (o < 1) {
+            return true;
+        }
+        if (o != cur.length) {
+            for (int i = o; i < cur.length; i++) {
+                cur[i] = 0;
+            }
+            len++;
+        }
+        src.coder.decode(buf[posW], cur, cur.length);
+        posW = (posW + 1) % buf.length;
+        pkt++;
+        return false;
     }
 
     public void mixRound(long[] res) {
-        posR = (posR + 1) % buf.length;
         int[] now = buf[posR];
+        posR = (posR + 1) % buf.length;
         for (int i = 0; i < now.length; i += 2) {
             long val = now[i + 0];
             val *= volL;
