@@ -53,20 +53,7 @@ void iou_read() {
         if (need < 1) break;
         recRem -= need;
         for (int pos = 0; pos < need; pos++) {
-            int val = *recPos;
-#if smpbt < 4
-            val >>= 32 - (8 * smpbt);
-#endif
-            bufD[padln + bufS + 0] = val;
-#if smpbt > 1
-            bufD[padln + bufS + 1] = val >> 8;
-#endif
-#if smpbt > 2
-            bufD[padln + bufS + 2] = val >> 16;
-#endif
-#if smpbt > 3
-            bufD[padln + bufS + 3] = val >> 24;
-#endif
+            iou_psam(bufS, *recPos);
             recPos++;
             bufS += smpbt;
         }

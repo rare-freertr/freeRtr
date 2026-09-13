@@ -24,39 +24,45 @@ int iou_gmsb(int ofs) {
     return (bufD[ofs + 0] << 24) | (bufD[ofs + 1] << 16) | (bufD[ofs + 2] << 8) | bufD[ofs + 3];
 }
 
+int iou_gsam(int ofs) {
+    int val = bufD[padln + ofs + 0];
+#if smpbt > 1
+    val |= bufD[padln + ofs + 1] << 8;
+#endif
+#if smpbt > 2
+    val |= bufD[padln + ofs + 2] << 16;
+#endif
+#if smpbt > 3
+    val |= bufD[padln + ofs + 3] << 24;
+#endif
+    return val << (4 - smpbt) * 8;
+}
+
+void iou_psam(int ofs, int val) {
+    val >>= (4 - smpbt) * 8;
+    bufD[padln + ofs + 0] = val;
+#if smpbt > 1
+    bufD[padln + ofs + 1] = val >> 8;
+#endif
+#if smpbt > 2
+    bufD[padln + ofs + 2] = val >> 16;
+#endif
+#if smpbt > 3
+    bufD[padln + ofs + 3] = val >> 24;
+#endif
+}
+
 void iou_mono(int src, int trg) {
     for (int p = 0; p < bufS; p += smpbt * 2) {
-        int val = bufD[p + padln + src + 0];
-#if smpbt > 1
-        val |= bufD[p + padln + src + 1] << 8;
-#endif
-#if smpbt > 2
-        val |= bufD[p + padln + src + 2] << 16;
-#endif
-#if smpbt > 3
-        val |= bufD[p + padln + src + 3] << 24;
-#endif
-        val <<= (4 - smpbt) * 8;
-        long res = val;
+        long res = iou_gsam(src + p);
         res *= monoVol;
         res /= 100;
-        val = res;
-        val >>= (4 - smpbt) * 8;
-        bufD[p + padln + trg + 0] = val;
-#if smpbt > 1
-        bufD[p + padln + trg + 1] = val >> 8;
-#endif
-#if smpbt > 2
-        bufD[p + padln + trg + 2] = val >> 16;
-#endif
-#if smpbt > 3
-        bufD[p + padln + trg + 3] = val >> 24;
-#endif
+        iou_psam(trg + p, res);
     }
 }
 
 void iou_loop() {
-    printf("payload=%i samplen=%i rate=%i\n", pktln, smpbt, srate);
+    printf("payload=%i depth=%i rate=%i\n", pktln, smpbt, srate);
     for (;;) {
         iou_read();
         if (bufS < 1) break;
