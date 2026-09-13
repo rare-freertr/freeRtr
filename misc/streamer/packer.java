@@ -105,6 +105,21 @@ public class packer {
     }
 
     /**
+     * set blocking mode
+     *
+     * @param mod true if block, false if nonblock
+     * @throws Exception on error
+     */
+    public void setBlock(boolean mod) throws Exception {
+        if (source != null) {
+            source.configureBlocking(mod);
+        }
+        if (target != null) {
+            target.configureBlocking(mod);
+        }
+    }
+
+    /**
      * get kind
      *
      * @param a string
@@ -336,7 +351,7 @@ public class packer {
             source.receive(buffer);
             len = buffer.position() - consts.rtpl;
             if (len < consts.rtpl) {
-                break;
+                return 0;
             }
             if ((buffer.get(1) & 0xff) == consts.rtpt) {
                 break;
@@ -381,7 +396,7 @@ public class packer {
             source.receive(buffer);
             len = buffer.position() - consts.scrl;
             if (len < consts.scrl) {
-                break;
+                return 0;
             }
             if ((buffer.get(0) & 0xff) != consts.scrb) {
                 continue;
@@ -439,7 +454,7 @@ public class packer {
             source.receive(buffer);
             len = buffer.position() - consts.vbal;
             if (len < consts.vbal) {
-                break;
+                return 0;
             }
             if (getMsb(buffer, 0) != consts.vbam) {
                 continue;
@@ -492,7 +507,7 @@ public class packer {
             source.receive(buffer);
             len = buffer.position() - consts.wfal;
             if (len < consts.wfal) {
-                break;
+                return 0;
             }
             if (getMsb(buffer, 0) == consts.wfam) {
                 break;
